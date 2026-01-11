@@ -3,10 +3,10 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
-  <title>HANTABLE BBQ VIGO</title>
+  <title>HanTable BBQ Vigo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    /* 基础样式与全屏容器 */
+    /* 全局与背景层 */
     html, body {
       margin: 0;
       padding: 0;
@@ -14,38 +14,32 @@
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "PingFang SC", "Microsoft YaHei";
       color: #fff;
       background: #000;
-      overflow: hidden; /* 防止出现背景视频滚动条 */
     }
     .page {
       position: relative;
       width: 100%;
-      height: 100%;
+      min-height: 100%;
     }
-
-    /* 背景视频全屏覆盖 */
     .bg-video {
-      position: absolute;
+      position: fixed;         /* 固定铺底，避免滚动时移位 */
       inset: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;       /* 保持填充裁切，铺满屏幕 */
+      object-fit: cover;
       z-index: 0;
     }
-
-    /* 黑色蒙层降低亮度 */
     .overlay {
-      position: absolute;
+      position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.35); /* 可根据需要加深或变浅，0.35~0.6 */
+      background: rgba(0,0,0,0.45); /* 黑色蒙层降低亮度，可按需调整 0.35~0.6 */
       z-index: 1;
     }
 
-    /* 内容层：居中标题 + 按钮 */
+    /* 内容区：居中标题与按钮 */
     .content {
       position: relative;
       z-index: 2;
-      width: 100%;
-      height: 100%;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -54,54 +48,93 @@
       box-sizing: border-box;
       text-align: center;
     }
-
     h1 {
-      margin: 0 0 48px;
-      font-size: clamp(28px, 4vw, 40px);
+      margin: 0 0 24px;
+      font-size: clamp(22px, 4vw, 36px);
       font-weight: 700;
       letter-spacing: 0.5px;
     }
 
-    /* 按钮容器：纵向、居中、全宽，最大宽度 50vw */
+    /* 按钮容器：纵向居中；宽度策略：最大 50vw，但不超过屏幕宽度并留出两侧安全边距 */
     .actions {
       width: 100%;
-      max-width: 80vw;            /* 你要求的“带盖 50vw”（理解为最大宽度 50vw） */
       display: flex;
-      flex-direction: column;     /* 纵向排列 */
-      gap: 12px;
-      align-items: stretch;       /* 子元素拉伸为容器宽度 */
-      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+      align-items: center;
       box-sizing: border-box;
+      padding: 0 16px;             /* 两侧 padding，保证视觉留白一致 */
     }
 
-    /* 按钮样式：白底黑字、圆角、全宽 */
-    .btn {
-      display: inline-block;
+    /* 按钮本体：占容器可用宽度，最大 50vw；在小屏时仍不溢出 */
+    .btn-wrap {
       width: 100%;
-      padding: 14px 14px;
-      border-radius: 10px;
-      border: 1px solid #fff;     /* 边框与页面风格一致，可改为 #000 */
+      display: flex;
+      justify-content: center;
+    }
+    .btn {
+      position: relative;
+      display: inline-block;
+      width: min(50vw, 100%);      /* 最大 50vw，但不会超过容器 100% */
+      padding: 12px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.9);
       background: #fff;
       color: #000;
-      font-size: clamp(16px, 2.8vw, 18px);
-      font-weight: 600;
+      font-size: clamp(16px, 3vw, 18px);
+      font-weight: 700;
       text-decoration: none;
       text-align: center;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.25);
-      transition: background .15s ease, color .15s ease, transform .1s ease;
+      overflow: hidden;            /* 为光晕遮罩裁切边界 */
+      box-shadow: 0 6px 18px rgba(0,0,0,0.35);
     }
-    .btn:hover { background: #f1f1f1; }
     .btn:active { transform: translateY(1px); }
 
-    /* 小屏优化：当屏幕较窄时，max-width 仍为 50vw，这样按钮宽度为屏幕宽度的一半 */
+    /* 红色动态光晕：使用::before 与 ::after 两层渐变并缓慢环绕（动画速度较慢） */
+    .btn::before,
+    .btn::after {
+      content: "";
+      position: absolute;
+      inset: -3px;                 /* 略超出边界制造外扩光晕 */
+      border-radius: 14px;
+      pointer-events: none;
+      z-index: -1;                 /* 放在按钮下方，与 overflow: hidden 配合仅显露内边缘 */
+      filter: blur(10px);
+      opacity: 0.9;
+      background: conic-gradient(
+        from 0deg,
+        rgba(255,60,60,0.0) 0%,
+        rgba(255,60,60,0.35) 20%,
+        rgba(255,0,0,0.55) 35%,
+        rgba(255,60,60,0.0) 50%,
+        rgba(255,60,60,0.35) 70%,
+        rgba(255,0,0,0.55) 85%,
+        rgba(255,60,60,0.0) 100%
+      );
+      animation: halo-spin 12s linear infinite; /* 慢速环绕 */
+    }
+    .btn::after {
+      filter: blur(18px);          /* 第二层更柔和 */
+      opacity: 0.55;
+      animation-duration: 18s;     /* 更慢一层，形成层叠效果 */
+      animation-direction: reverse;
+    }
+
+    @keyframes halo-spin {
+      0%   { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* 小屏优化：保持两侧 padding 一致，不让按钮超出容器 */
     @media (max-width: 480px) {
-      .actions { max-width: 80vw; } /* 如需更宽的按钮，在很窄屏幕上可以放宽到 80vw；若坚持 50vw，请删掉本规则 */
+      .actions { padding: 0 16px; }
+      .btn { width: 100%; }        /* 超小屏直接全宽（不超过容器），保证左右边距一致 */
     }
   </style>
 </head>
 <body>
   <div class="page">
-    <!-- 背景视频（请将 src 替换成你上传的 mp4 文件名） -->
+    <!-- 背景视频 -->
     <video
       class="bg-video"
       src="https://hzeng949-boop.github.io/Video_hantablevigo.mp4"
@@ -111,29 +144,35 @@
       loop
     ></video>
 
-    <!-- 黑色半透明蒙层 -->
     <div class="overlay"></div>
 
-    <!-- 居中内容：标题 + 按钮 -->
     <div class="content">
       <h1>HanTable BBQ Vigo</h1>
+
       <div class="actions">
-        <a class="btn" href="https://hzeng949-boop.github.io/Hantable_菜单_compressed.pdf" target="_blank" rel="noopener">Ver Carta</a>
-        <a class="btn" href="https://hzeng949-boop.github.io/Hantable_甜点.pdf" target="_blank" rel="noopener">Ver Postre</a>
+        <div class="btn-wrap">
+          <a class="btn" href="https://hzeng949-boop.github.io/Hantable_菜单_compressed.pdf" target="_blank" rel="noopener">Ver Carta</a>
+        </div>
+        <div class="btn-wrap">
+          <a class="btn" href="https://hzeng949-boop.github.io/Hantable_甜点.pdf" target="_blank" rel="noopener">Ver Postre</a>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    // 一些移动端会暂停自动播放，需要确保视频准备好后尝试播放
+    // 尝试在加载后播放（部分移动端需要交互，muted+playsinline提高自动播放成功率）
     const vid = document.querySelector('.bg-video');
     function tryPlay() {
       if (!vid) return;
       const p = vid.play();
       if (p && typeof p.then === 'function') {
         p.catch(() => {
-          // 有些浏览器在未交互时禁止自动播放，
-          // 我们可以在用户点击按钮时再触发播放，或者保持 muted 以提高自动播放成功率
+          // 若浏览器策略阻止自动播放，可在首次用户点击按钮时再尝试 play()
+          const actions = document.querySelector('.actions');
+          actions?.addEventListener('click', () => {
+            vid.play().catch(() => {});
+          }, { once: true });
         });
       }
     }
